@@ -1,4 +1,5 @@
 'use client'
+// ☝️ This directive is required as we're using hooks and browser APIs
 
 import React from 'react'
 import { useQuery } from '@tanstack/react-query'
