@@ -1,126 +1,166 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import CoinsTable from '@/components/CoinsTable';
+import { useParams, useRouter } from 'next/navigation';
+import { ArrowLeft, Globe, Twitter, Github, Discord } from 'lucide-react';
 
-interface CoinData {
-  id: string;
-  name: string;
-  algorithm: string;
-  hashrate: string;
-  difficulty: string;
-  price: number;
-  change24h: string;
-  blockReward: number;
-  blocksPerDay: number;
-}
-
-type CoinId = 'verus-coin' | 'raptoreum' | 'alephium';
-
-interface CoinConfig {
-  algorithm: string;
-  hashrate: string;
-  difficulty: string;
-  blockReward: number;
-  blocksPerDay: number;
-}
-
-const COIN_CONFIGS: Record<CoinId, CoinConfig> = {
+// Add logo support and additional links
+const COIN_METADATA = {
   'verus-coin': {
-    algorithm: 'VerusHash 2.2',
-    hashrate: '54.2 TH/s',
-    difficulty: '289,432.44',
-    blockReward: 24,
-    blocksPerDay: 1440
-  },
-  'raptoreum': {
-    algorithm: 'GhostRider',
-    hashrate: '432.1 MH/s',
-    difficulty: '13,432.77',
-    blockReward: 100,
-    blocksPerDay: 2880
-  },
-  'alephium': {
-    algorithm: 'Blake3',
-    hashrate: '89.4 TH/s',
-    difficulty: '156,744.33',
-    blockReward: 2.5,
-    blocksPerDay: 1440
+    logo: 'https://raw.githubusercontent.com/VerusCoin/verus.io/master/src/assets/img/verus-logo.svg',
+    website: 'https://verus.io',
+    twitter: 'https://twitter.com/veruscoin',
+    github: 'https://github.com/VerusCoin',
+    discord: 'https://discord.gg/veruscoin',
+    description: 'Verus is a zero-knowledge privacy-preserving blockchain platform with strong decentralization through innovative Proof-of-Power consensus.',
+    launch_date: '2018-05-21',
+    resources: [
+      {
+        title: 'Mining Guide',
+        url: 'https://docs.verus.io/mining-and-staking/start-mining'
+      },
+      {
+        title: 'Mining Calculator',
+        url: 'https://minerstat.com/coin/VRSC'
+      },
+      {
+        title: 'Block Explorer',
+        url: 'https://explorer.verus.io'
+      }
+    ]
   }
 };
 
-export default function Home(): React.JSX.Element {
-  const [coins, setCoins] = useState<CoinData[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+// ... (keep existing interfaces and VERUS_CONFIG)
 
-  const fetchPrices = async () => {
-    try {
-      const response = await fetch(
-        `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${Object.keys(COIN_CONFIGS).join(',')}&order=market_cap_desc&sparkline=false&price_change_percentage=24h`
-      );
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch prices');
-      }
-
-      const data = await response.json();
-      
-      const updatedCoins = data.map((coin: any) => {
-        const coinId = coin.id as CoinId;
-        return {
-          id: coinId,
-          name: coin.name,
-          algorithm: COIN_CONFIGS[coinId].algorithm,
-          hashrate: COIN_CONFIGS[coinId].hashrate,
-          difficulty: COIN_CONFIGS[coinId].difficulty,
-          price: coin.current_price,
-          change24h: `${coin.price_change_percentage_24h?.toFixed(2)}%`,
-          blockReward: COIN_CONFIGS[coinId].blockReward,
-          blocksPerDay: COIN_CONFIGS[coinId].blocksPerDay
-        };
-      });
-
-      setCoins(updatedCoins);
-      setError(null);
-    } catch (err) {
-      console.error('Error fetching prices:', err);
-      setError('Failed to fetch latest prices');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchPrices();
-    const interval = setInterval(fetchPrices, 60000);
-    return () => clearInterval(interval);
-  }, []);
+export default function CoinProfile() {
+  const router = useRouter();
+  const params = useParams();
+  const coinId = params.coinId as string;
+  
+  // ... (keep existing state and data fetching logic)
 
   return (
-    <main className="min-h-screen bg-gray-900 text-white p-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-4xl font-bold">POW Mining Dashboard</h1>
-          {error && <div className="text-red-400">{error}</div>}
+    <div className="min-h-screen bg-gray-900 text-white">
+      {/* Navigation Bar */}
+      <nav className="bg-gray-800 border-b border-gray-700 p-4">
+        <div className="max-w-7xl mx-auto flex items-center">
+          <button 
+            onClick={() => router.push('/')}
+            className="flex items-center text-gray-300 hover:text-white"
+          >
+            <ArrowLeft className="w-5 h-5 mr-2" />
+            Back to Dashboard
+          </button>
         </div>
-        
-        {loading ? (
-          <div className="flex justify-center items-center h-64 bg-gray-800 rounded-lg">
-            <div className="text-xl">Loading latest prices...</div>
+      </nav>
+
+      {loading ? (
+        <div className="p-8">
+          <div className="max-w-7xl mx-auto flex justify-center items-center h-64">
+            <div className="text-xl">Loading coin data...</div>
           </div>
-        ) : (
-          <>
-            <CoinsTable coins={coins} />
-            <div className="mt-8 text-gray-400 text-sm">
-              * Click on any coin to view detailed mining statistics and setup guides
+        </div>
+      ) : error || !data ? (
+        <div className="p-8">
+          <div className="max-w-7xl mx-auto">
+            <div className="text-red-400">{error || 'Failed to load coin data'}</div>
+          </div>
+        </div>
+      ) : (
+        <div className="p-8">
+          <div className="max-w-7xl mx-auto">
+            {/* Coin Header */}
+            <div className="flex items-start gap-6 mb-8">
+              <img 
+                src={COIN_METADATA[coinId]?.logo} 
+                alt={`${data.name} logo`}
+                className="w-16 h-16"
+              />
+              <div>
+                <div className="flex items-center gap-4">
+                  <h1 className="text-4xl font-bold">{data.name}</h1>
+                  <span className="text-2xl text-gray-400">{data.symbol}</span>
+                </div>
+                <p className="text-gray-400 mt-2">
+                  {COIN_METADATA[coinId]?.description}
+                </p>
+                <div className="flex gap-4 mt-4">
+                  {COIN_METADATA[coinId]?.website && (
+                    <a 
+                      href={COIN_METADATA[coinId].website}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-gray-400 hover:text-white"
+                    >
+                      <Globe className="w-5 h-5" />
+                    </a>
+                  )}
+                  {COIN_METADATA[coinId]?.twitter && (
+                    <a 
+                      href={COIN_METADATA[coinId].twitter}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-gray-400 hover:text-white"
+                    >
+                      <Twitter className="w-5 h-5" />
+                    </a>
+                  )}
+                  {COIN_METADATA[coinId]?.github && (
+                    <a 
+                      href={COIN_METADATA[coinId].github}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-gray-400 hover:text-white"
+                    >
+                      <Github className="w-5 h-5" />
+                    </a>
+                  )}
+                  {COIN_METADATA[coinId]?.discord && (
+                    <a 
+                      href={COIN_METADATA[coinId].discord}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-gray-400 hover:text-white"
+                    >
+                      <Discord className="w-5 h-5" />
+                    </a>
+                  )}
+                </div>
+              </div>
             </div>
-            <div className="mt-2 text-gray-500 text-xs">
-              Prices update every 60 seconds
+
+            {/* Keep existing Market Information and Mining Information grids */}
+            
+            {/* Add Resources Section */}
+            <div className="bg-gray-800 rounded-lg p-6 mb-8">
+              <h2 className="text-xl font-semibold mb-4">Resources</h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {COIN_METADATA[coinId]?.resources.map((resource) => (
+                  
+                    key={resource.title}
+                    href={resource.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-between bg-gray-700 p-4 rounded-lg hover:bg-gray-600 transition-colors"
+                  >
+                    <span>{resource.title}</span>
+                    <Arrow className="w-4 h-4" />
+                  </a>
+                ))}
+              </div>
             </div>
-          </>
-        )}
-      </div>
-    </main>
+
+            {/* Keep existing Mining Pools section */}
+
+            {/* Last Updated Info */}
+            <div className="text-sm text-gray-400 flex items-center justify-between">
+              <span>Last updated: {new Date(data.last_updated).toLocaleString()}</span>
+              <span>Launch Date: {COIN_METADATA[coinId]?.launch_date}</span>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
