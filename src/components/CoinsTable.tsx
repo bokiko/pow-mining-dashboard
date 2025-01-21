@@ -16,7 +16,7 @@ export default function CoinsTable() {
       price: 0.42,
       change24h: '+2.5%',
       blockReward: 24,
-      blocksPerDay: 1440, // assuming 1-minute block time
+      blocksPerDay: 1440,
     },
     {
       id: 'rtm',
@@ -27,7 +27,7 @@ export default function CoinsTable() {
       price: 0.0012,
       change24h: '-1.2%',
       blockReward: 100,
-      blocksPerDay: 2880, // assuming 30-second block time
+      blocksPerDay: 2880,
     },
     {
       id: 'alph',
@@ -38,17 +38,17 @@ export default function CoinsTable() {
       price: 1.24,
       change24h: '+5.7%',
       blockReward: 2.5,
-      blocksPerDay: 1440, // assuming 1-minute block time
+      blocksPerDay: 1440,
     }
   ];
 
   const calculateDailyEmissions = (coin: typeof coins[0]) => {
     const dailyCoins = coin.blockReward * coin.blocksPerDay;
-    const dailyUSD = dailyCoins * coin.price;
-    return {
-      coins: dailyCoins.toLocaleString(undefined, { maximumFractionDigits: 0 }),
-      usd: dailyUSD.toLocaleString(undefined, { style: 'currency', currency: 'USD' })
-    };
+    return (dailyCoins * coin.price).toLocaleString(undefined, { 
+      style: 'currency', 
+      currency: 'USD',
+      maximumFractionDigits: 0
+    });
   };
 
   return (
@@ -67,28 +67,22 @@ export default function CoinsTable() {
           </tr>
         </thead>
         <tbody>
-          {coins.map((coin) => {
-            const emissions = calculateDailyEmissions(coin);
-            return (
-              <tr 
-                key={coin.id}
-                className="border-b border-gray-700 hover:bg-gray-700 cursor-pointer"
-                onClick={() => router.push(`/coins/${coin.id}`)}
-              >
-                <td className="p-4 font-medium">{coin.name}</td>
-                <td className="p-4">{coin.algorithm}</td>
-                <td className="p-4">{coin.hashrate}</td>
-                <td className="p-4">{coin.difficulty}</td>
-                <td className="p-4">${coin.price}</td>
-                <td className="p-4">{coin.change24h}</td>
-                <td className="p-4">{coin.blockReward} {coin.id.toUpperCase()}</td>
-                <td className="p-4">
-                  <div>{emissions.coins} {coin.id.toUpperCase()}</div>
-                  <div className="text-gray-400 text-sm">{emissions.usd}</div>
-                </td>
-              </tr>
-            );
-          })}
+          {coins.map((coin) => (
+            <tr 
+              key={coin.id}
+              className="border-b border-gray-700 hover:bg-gray-700 cursor-pointer"
+              onClick={() => router.push(`/coins/${coin.id}`)}
+            >
+              <td className="p-4 font-medium">{coin.name}</td>
+              <td className="p-4">{coin.algorithm}</td>
+              <td className="p-4">{coin.hashrate}</td>
+              <td className="p-4">{coin.difficulty}</td>
+              <td className="p-4">${coin.price}</td>
+              <td className="p-4">{coin.change24h}</td>
+              <td className="p-4">{coin.blockReward} {coin.id.toUpperCase()}</td>
+              <td className="p-4">{calculateDailyEmissions(coin)}</td>
+            </tr>
+          ))}
         </tbody>
       </table>
     </div>
