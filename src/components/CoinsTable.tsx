@@ -3,46 +3,26 @@
 import React from 'react';
 import { useRouter } from 'next/navigation';
 
-export default function CoinsTable() {
-  const router = useRouter();
-  
-  const coins = [
-    {
-      id: 'verus',
-      name: 'Verus Coin',
-      algorithm: 'VerusHash 2.2',
-      hashrate: '54.2 TH/s',
-      difficulty: '289,432.44',
-      price: 0.42,
-      change24h: '+2.5%',
-      blockReward: 24,
-      blocksPerDay: 1440,
-    },
-    {
-      id: 'rtm',
-      name: 'Raptoreum',
-      algorithm: 'GhostRider',
-      hashrate: '432.1 MH/s',
-      difficulty: '13,432.77',
-      price: 0.0012,
-      change24h: '-1.2%',
-      blockReward: 100,
-      blocksPerDay: 2880,
-    },
-    {
-      id: 'alph',
-      name: 'Alephium',
-      algorithm: 'Blake3',
-      hashrate: '89.4 TH/s',
-      difficulty: '156,744.33',
-      price: 1.24,
-      change24h: '+5.7%',
-      blockReward: 2.5,
-      blocksPerDay: 1440,
-    }
-  ];
+interface CoinData {
+  id: string;
+  name: string;
+  algorithm: string;
+  hashrate: string;
+  difficulty: string;
+  price: number;
+  change24h: string;
+  blockReward: number;
+  blocksPerDay: number;
+}
 
-  const calculateDailyEmissions = (coin: typeof coins[0]) => {
+interface CoinsTableProps {
+  coins: CoinData[];
+}
+
+export default function CoinsTable({ coins }: CoinsTableProps) {
+  const router = useRouter();
+
+  const calculateDailyEmissions = (coin: CoinData) => {
     const dailyCoins = coin.blockReward * coin.blocksPerDay;
     return (dailyCoins * coin.price).toLocaleString(undefined, { 
       style: 'currency', 
