@@ -15,8 +15,20 @@ interface CoinData {
   blocksPerDay: number;
 }
 
-// Static mining data - this won't change frequently
-const COIN_CONFIGS = {
+// Define a type for the coin IDs
+type CoinId = 'verus-coin' | 'raptoreum' | 'alephium';
+
+// Define the config type
+interface CoinConfig {
+  algorithm: string;
+  hashrate: string;
+  difficulty: string;
+  blockReward: number;
+  blocksPerDay: number;
+}
+
+// Define the configs with proper typing
+const COIN_CONFIGS: Record<CoinId, CoinConfig> = {
   'verus-coin': {
     algorithm: 'VerusHash 2.2',
     hashrate: '54.2 TH/s',
@@ -57,17 +69,20 @@ export default function Home() {
 
       const data = await response.json();
       
-      const updatedCoins = data.map((coin: any) => ({
-        id: coin.id,
-        name: coin.name,
-        algorithm: COIN_CONFIGS[coin.id].algorithm,
-        hashrate: COIN_CONFIGS[coin.id].hashrate,
-        difficulty: COIN_CONFIGS[coin.id].difficulty,
-        price: coin.current_price,
-        change24h: `${coin.price_change_percentage_24h?.toFixed(2)}%`,
-        blockReward: COIN_CONFIGS[coin.id].blockReward,
-        blocksPerDay: COIN_CONFIGS[coin.id].blocksPerDay
-      }));
+      const updatedCoins = data.map((coin: any) => {
+        const coinId = coin.id as CoinId;
+        return {
+          id: coinId,
+          name: coin.name,
+          algorithm: COIN_CONFIGS[coinId].algorithm,
+          hashrate: COIN_CONFIGS[coinId].hashrate,
+          difficulty: COIN_CONFIGS[coinId].difficulty,
+          price: coin.current_price,
+          change24h: `${coin.price_change_percentage_24h?.toFixed(2)}%`,
+          blockReward: COIN_CONFIGS[coinId].blockReward,
+          blocksPerDay: COIN_CONFIGS[coinId].blocksPerDay
+        };
+      });
 
       setCoins(updatedCoins);
       setError(null);
@@ -102,14 +117,4 @@ export default function Home() {
           <>
             <CoinsTable coins={coins} />
             <div className="mt-8 text-gray-400 text-sm">
-              * Click on any coin to view detailed mining statistics and setup guides
-            </div>
-            <div className="mt-2 text-gray-500 text-xs">
-              Prices update every 60 seconds
-            </div>
-          </>
-        )}
-      </div>
-    </main>
-  );
-}
+              * Click on any coi
