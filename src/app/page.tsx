@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import CoinsTable from '@/components/CoinsTable';
 
 interface CoinData {
@@ -15,10 +15,8 @@ interface CoinData {
   blocksPerDay: number;
 }
 
-// Define a type for the coin IDs
 type CoinId = 'verus-coin' | 'raptoreum' | 'alephium';
 
-// Define the config type
 interface CoinConfig {
   algorithm: string;
   hashrate: string;
@@ -27,7 +25,6 @@ interface CoinConfig {
   blocksPerDay: number;
 }
 
-// Define the configs with proper typing
 const COIN_CONFIGS: Record<CoinId, CoinConfig> = {
   'verus-coin': {
     algorithm: 'VerusHash 2.2',
@@ -52,7 +49,7 @@ const COIN_CONFIGS: Record<CoinId, CoinConfig> = {
   }
 };
 
-export default function Home() {
+export default function Home(): React.JSX.Element {
   const [coins, setCoins] = useState<CoinData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -96,7 +93,6 @@ export default function Home() {
 
   useEffect(() => {
     fetchPrices();
-    // Fetch prices every 60 seconds
     const interval = setInterval(fetchPrices, 60000);
     return () => clearInterval(interval);
   }, []);
@@ -117,4 +113,14 @@ export default function Home() {
           <>
             <CoinsTable coins={coins} />
             <div className="mt-8 text-gray-400 text-sm">
-              * Click on any coi
+              * Click on any coin to view detailed mining statistics and setup guides
+            </div>
+            <div className="mt-2 text-gray-500 text-xs">
+              Prices update every 60 seconds
+            </div>
+          </>
+        )}
+      </div>
+    </main>
+  );
+}
