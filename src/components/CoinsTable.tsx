@@ -57,7 +57,7 @@ export default function CoinsTable({ coins }: CoinsTableProps) {
               <td className="p-4">{coin.algorithm}</td>
               <td className="p-4">{coin.hashrate}</td>
               <td className="p-4">{coin.difficulty}</td>
-              <td className="p-4">${coin.price}</td>
+              <td className="p-4">${coin.price.toFixed(4)}</td>
               <td className="p-4">{coin.change24h}</td>
               <td className="p-4">{coin.blockReward} {coin.id.toUpperCase()}</td>
               <td className="p-4">{calculateDailyEmissions(coin)}</td>
