@@ -1,92 +1,97 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { useEffect, useState } from 'react';
+import CoinsTable from '@/components/CoinsTable';
 
-interface PriceChartProps {
-  coinId: string;
-  symbol: string;
+interface CoinData {
+  id: string;
+  name: string;
+  algorithm: string;
+  hashrate: string;
+  difficulty: string;
+  price: number;
+  change24h: string;
+  blockReward: number;
+  blocksPerDay: number;
 }
 
-export default function PriceChart({ coinId, symbol }: PriceChartProps) {
-  const [priceData, setPriceData] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+const COIN_CONFIGS = {
+  'verus-coin': {
+    algorithm: 'VerusHash 2.2',
+    hashrate: '54.2 TH/s',
+    difficulty: '289,432.44',
+    blockReward: 24,
+    blocksPerDay: 1440,
+  },
+  'raptoreum': {
+    algorithm: 'GhostRider',
+    hashrate: '432.1 MH/s',
+    difficulty: '13,432.77',
+    blockReward: 100,
+    blocksPerDay: 2880,
+  },
+  'alephium': {
+    algorithm: 'Blake3',
+    hashrate: '89.4 TH/s',
+    difficulty: '156,744.33',
+    blockReward: 2.5,
+    blocksPerDay: 1440,
+  }
+};
+
+export default function Home() {
+  const [coins, setCoins] = useState<CoinData[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchPriceHistory = async () => {
+    const fetchCoinData = async () => {
       try {
-        // CoinGecko API - 7 days of hourly data
         const response = await fetch(
-          `https://api.coingecko.com/api/v3/coins/${coinId}/market_chart?vs_currency=usd&days=7&interval=hourly`
+          `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${Object.keys(COIN_CONFIGS).join(',')}&order=market_cap_desc&sparkline=false`
         );
         const data = await response.json();
-        
-        // Transform the data into the format our chart needs
-        const formattedData = data.prices.map(([timestamp, price]: [number, number]) => ({
-          date: new Date(timestamp).toLocaleDateString(),
-          price: price,
-          volume: 0 // We can add volume data if needed
+
+        const formattedCoins = data.map((coin: any) => ({
+          id: coin.id,
+          name: coin.name,
+          algorithm: COIN_CONFIGS[coin.id].algorithm,
+          hashrate: COIN_CONFIGS[coin.id].hashrate,
+          difficulty: COIN_CONFIGS[coin.id].difficulty,
+          price: coin.current_price,
+          change24h: `${coin.price_change_percentage_24h?.toFixed(1)}%`,
+          blockReward: COIN_CONFIGS[coin.id].blockReward,
+          blocksPerDay: COIN_CONFIGS[coin.id].blocksPerDay,
         }));
-        
-        setPriceData(formattedData);
+
+        setCoins(formattedCoins);
       } catch (error) {
-        console.error('Error fetching price data:', error);
+        console.error('Error fetching coin data:', error);
       } finally {
-        setIsLoading(false);
+        setLoading(false);
       }
     };
 
-    fetchPriceHistory();
-  }, [coinId]);
-
-  if (isLoading) {
-    return (
-      <div className="bg-gray-800 rounded-lg p-6">
-        <h2 className="text-xl font-semibold mb-4">Price Chart</h2>
-        <div className="h-[400px] flex items-center justify-center">
-          <span>Loading price data...</span>
-        </div>
-      </div>
-    );
-  }
+    fetchCoinData();
+  }, []);
 
   return (
-    <div className="bg-gray-800 rounded-lg p-6">
-      <h2 className="text-xl font-semibold mb-4">Price Chart</h2>
-      <div className="h-[400px]">
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={priceData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-            <XAxis 
-              dataKey="date" 
-              stroke="#9CA3AF"
-              style={{ fontSize: '12px' }}
-            />
-            <YAxis 
-              stroke="#9CA3AF"
-              style={{ fontSize: '12px' }}
-              domain={['auto', 'auto']}
-              tickFormatter={(value) => `$${value.toFixed(4)}`}
-            />
-            <Tooltip 
-              contentStyle={{ 
-                backgroundColor: '#1F2937',
-                border: 'none',
-                borderRadius: '0.5rem'
-              }}
-              labelStyle={{ color: '#9CA3AF' }}
-              formatter={(value) => [`$${Number(value).toFixed(8)}`, 'Price']}
-            />
-            <Line 
-              type="monotone" 
-              dataKey="price" 
-              stroke="#10B981" 
-              dot={false}
-              strokeWidth={2}
-            />
-          </LineChart>
-        </ResponsiveContainer>
+    <main className="min-h-screen bg-gray-900 text-white p-8">
+      <div className="max-w-7xl mx-auto">
+        <h1 className="text-4xl font-bold mb-8">POW Mining Dashboard</h1>
+        
+        {loading ? (
+          <div className="flex justify-center items-center h-64">
+            <div className="text-xl">Loading coin data...</div>
+          </div>
+        ) : (
+          <>
+            <CoinsTable coins={coins} />
+            <div className="mt-8 text-gray-400 text-sm">
+              * Click on any coin to view detailed mining statistics and setup guides
+            </div>
+          </>
+        )}
       </div>
-    </div>
+    </main>
   );
 }
