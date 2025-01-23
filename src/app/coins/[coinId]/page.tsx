@@ -2,9 +2,33 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Globe, Twitter, Github, Discord } from 'lucide-react';
 
-interface CoinData {
+interface CoinMetadata {
+  logo: string;
+  website: string;
+  twitter: string;
+  github: string;
+  discord: string;
+  description: string;
+  launch_date: string;
+  algorithm: string;
+  block_reward: number;
+  block_time: number;
+  resources: {
+    title: string;
+    url: string;
+  }[];
+  pools: {
+    name: string;
+    hashrate: string;
+    miners: number;
+    fee: string;
+    minimum_payout: string;
+  }[];
+}
+
+interface CoinData extends CoinMetadata {
   name: string;
   symbol: string;
   price: number;
@@ -14,7 +38,54 @@ interface CoinData {
   max_supply: number;
   price_change_24h: number;
   last_updated: string;
+  network_hashrate: string;
+  difficulty: string;
 }
+
+const COINS_METADATA: Record<string, CoinMetadata> = {
+  'verus-coin': {
+    logo: 'https://raw.githubusercontent.com/VerusCoin/verus.io/master/src/assets/img/verus-logo.svg',
+    website: 'https://verus.io',
+    twitter: 'https://twitter.com/veruscoin',
+    github: 'https://github.com/VerusCoin',
+    discord: 'https://discord.gg/veruscoin',
+    description: 'Verus is a zero-knowledge privacy-preserving blockchain platform with innovative Proof-of-Power consensus.',
+    launch_date: '2018-05-21',
+    algorithm: 'VerusHash 2.2',
+    block_reward: 24,
+    block_time: 60,
+    resources: [
+      {
+        title: 'Mining Guide',
+        url: 'https://docs.verus.io/mining-and-staking/start-mining'
+      },
+      {
+        title: 'Mining Calculator',
+        url: 'https://minerstat.com/coin/VRSC'
+      },
+      {
+        title: 'Block Explorer',
+        url: 'https://explorer.verus.io'
+      }
+    ],
+    pools: [
+      {
+        name: 'Luckpool',
+        hashrate: '12.4 TH/s',
+        miners: 342,
+        fee: '0.5%',
+        minimum_payout: '10 VRSC'
+      },
+      {
+        name: 'HellsPool',
+        hashrate: '8.7 TH/s',
+        miners: 256,
+        fee: '1%',
+        minimum_payout: '5 VRSC'
+      }
+    ]
+  }
+};
 
 const Page = () => {
   const router = useRouter();
@@ -34,7 +105,11 @@ const Page = () => {
         if (!response.ok) throw new Error('Failed to fetch coin data');
         const cgData = await response.json();
 
+        const metadata = COINS_METADATA[coinId];
+        if (!metadata) throw new Error('Coin not supported');
+
         setData({
+          ...metadata,
           name: cgData.name,
           symbol: cgData.symbol.toUpperCase(),
           price: cgData.market_data.current_price.usd,
@@ -43,7 +118,9 @@ const Page = () => {
           circulating_supply: cgData.market_data.circulating_supply,
           max_supply: cgData.market_data.max_supply,
           price_change_24h: cgData.market_data.price_change_percentage_24h,
-          last_updated: cgData.market_data.last_updated
+          last_updated: cgData.market_data.last_updated,
+          network_hashrate: '54.2 TH/s', // This would come from blockchain API
+          difficulty: '289,432.44', // This would come from blockchain API
         });
       } catch (err) {
         console.error('Error fetching data:', err);
@@ -54,7 +131,6 @@ const Page = () => {
     };
 
     fetchData();
-    // Fetch every 60 seconds
     const interval = setInterval(fetchData, 60000);
     return () => clearInterval(interval);
   }, [coinId]);
@@ -103,6 +179,15 @@ const Page = () => {
     );
   }
 
+  const dailyEmissions = {
+    coins: data.block_reward * (86400 / data.block_time),
+    usd: (data.block_reward * (86400 / data.block_time) * data.price).toLocaleString('en-US', { 
+      style: 'currency', 
+      currency: 'USD',
+      maximumFractionDigits: 0 
+    })
+  };
+
   return (
     <div className="min-h-screen bg-gray-900 text-white">
       <nav className="bg-gray-800 border-b border-gray-700 p-4">
@@ -119,12 +204,43 @@ const Page = () => {
 
       <div className="p-8">
         <div className="max-w-7xl mx-auto">
-          <div className="flex items-center gap-4 mb-8">
-            <h1 className="text-4xl font-bold">{data.name}</h1>
-            <span className="text-2xl text-gray-400">{data.symbol}</span>
+          {/* Header */}
+          <div className="flex items-start gap-6 mb-8">
+            <img src={data.logo} alt={`${data.name} logo`} className="w-16 h-16" />
+            <div>
+              <div className="flex items-center gap-4">
+                <h1 className="text-4xl font-bold">{data.name}</h1>
+                <span className="text-2xl text-gray-400">{data.symbol}</span>
+              </div>
+              <p className="text-gray-400 mt-2">{data.description}</p>
+              <div className="flex gap-4 mt-4">
+                {data.website && (
+                  <a href={data.website} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white">
+                    <Globe className="w-5 h-5" />
+                  </a>
+                )}
+                {data.twitter && (
+                  <a href={data.twitter} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white">
+                    <Twitter className="w-5 h-5" />
+                  </a>
+                )}
+                {data.github && (
+                  <a href={data.github} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white">
+                    <Github className="w-5 h-5" />
+                  </a>
+                )}
+                {data.discord && (
+                  <a href={data.discord} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white">
+                    <Discord className="w-5 h-5" />
+                  </a>
+                )}
+              </div>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {/* Stats Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+            {/* Market Info */}
             <div className="bg-gray-800 rounded-lg p-6">
               <h2 className="text-xl font-semibold mb-4">Market Information</h2>
               <div className="space-y-3">
@@ -153,12 +269,111 @@ const Page = () => {
                   <span className="text-gray-400">Max Supply:</span>
                   <span className="font-medium">{data.max_supply.toLocaleString()} {data.symbol}</span>
                 </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Circ. Supply / Max Supply:</span>
+                  <span className="font-medium">
+                    {((data.circulating_supply / data.max_supply) * 100).toFixed(2)}%
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Mining Info */}
+            <div className="bg-gray-800 rounded-lg p-6">
+              <h2 className="text-xl font-semibold mb-4">Mining Information</h2>
+              <div className="space-y-3">
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Algorithm:</span>
+                  <span className="font-medium">{data.algorithm}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Network Hashrate:</span>
+                  <span className="font-medium">{data.network_hashrate}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Difficulty:</span>
+                  <span className="font-medium">{data.difficulty}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Block Reward:</span>
+                  <span className="font-medium">{data.block_reward} {data.symbol}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Block Time:</span>
+                  <span className="font-medium">{data.block_time} seconds</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Blocks per Day:</span>
+                  <span className="font-medium">{(86400 / data.block_time).toFixed(0)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Coins Mined per Day:</span>
+                  <span className="font-medium">{dailyEmissions.coins.toLocaleString()} {data.symbol}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Daily Emissions:</span>
+                  <span className="font-medium">{dailyEmissions.usd}</span>
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="mt-8 text-sm text-gray-400">
-            Last updated: {new Date(data.last_updated).toLocaleString()}
+          {/* Resources */}
+          <div className="bg-gray-800 rounded-lg p-6 mb-8">
+            <h2 className="text-xl font-semibold mb-4">Resources</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {data.resources.map(resource => (
+                
+                  key={resource.title}
+                  href={resource.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-between bg-gray-700 p-4 rounded-lg hover:bg-gray-600 transition-colors"
+                >
+                  <span>{resource.title}</span>
+                  <ArrowLeft className="w-4 h-4 rotate-180" />
+                </a>
+              ))}
+            </div>
+          </div>
+
+          {/* Mining Pools */}
+          <div className="bg-gray-800 rounded-lg p-6 mb-8">
+            <h2 className="text-xl font-semibold mb-4">Mining Pools</h2>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="text-left border-b border-gray-700">
+                    <th className="p-4">Pool Name</th>
+                    <th className="p-4">Hashrate</th>
+                    <th className="p-4">Miners</th>
+                    <th className="p-4">Fee</th>
+                    <th className="p-4">Minimum Payout</th>
+                    <th className="p-4">Network Share</th>
+                    </tr>
+                </thead>
+                <tbody>
+                  {data.pools.map(pool => (
+                    <tr key={pool.name} className="border-b border-gray-700">
+                      <td className="p-4">{pool.name}</td>
+                      <td className="p-4">{pool.hashrate}</td>
+                      <td className="p-4">{pool.miners}</td>
+                      <td className="p-4">{pool.fee}</td>
+                      <td className="p-4">{pool.minimum_payout}</td>
+                      <td className="p-4">
+                        {((parseInt(pool.hashrate) / parseInt(data.network_hashrate)) * 100).toFixed(1)}%
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Footer - Last Updated */}
+          <div className="text-sm text-gray-400 flex items-center justify-between">
+            <span>Last updated: {new Date(data.last_updated).toLocaleString()}</span>
+            <span>Launch Date: {data.launch_date}</span>
           </div>
         </div>
       </div>
